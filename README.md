@@ -1,2 +1,2 @@
 # dhtc
-a test project
+An App written by JS.Just a test app.
