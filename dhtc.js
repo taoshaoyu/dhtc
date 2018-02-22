@@ -19,7 +19,7 @@ pause()  :
 */ 
 
 var BOOTSTRAP_NODES = [
-    ['router.bittorrent.com', 6881]
+//    ['router.bittorrent.com', 6881]
 /*
    ,['67.215.246.10', 6881]
    ,['router.bittorrent.com', 6969]
@@ -42,13 +42,12 @@ DHTClient.prototype.onUdpListen=function(){
 
 DHTClient.prototype.onUdpMessage=function(msg, rinfo){
 	console.log("<--utp message");
-	console.log(rinfo);
 	msg=dhtc_ll.decodeMsg(msg);
-	if(msg.t=='taos')
-	{
-		console.log("taosy");
+	dhtc_ll.printKRPC(msg);
+	if( (msg.y == 'r') && msg.r.nodes ){
+		nodes=dhtc_ll.decodeNodes(msg.r.nodes);
+		console.log(nodes);
 	}
-	console.log(msg);
 }
 
 DHTClient.prototype.onUdpError=function(error){
@@ -91,7 +90,7 @@ DHTClient.prototype.start=function(){
 	console.log("+DHTClient start");
 	console.log("+DHTClient start, start timer");
 	setInterval(function() {
-//		this.pingDHTNetwork();
+		this.pingDHTNetwork();
         this.joinDHTNetwork();
     //    this.makeNeighbours();
     }.bind(this), 3000);
