@@ -22,9 +22,9 @@ decodeMsg=function(msg){
 
 
 sendKRPC=function(udp,msg,rinfo){
-	console.log("-->sendKRPC");
-	console.log(rinfo);
-	console.log(msg);
+//	console.log("-->sendKRPC");
+//	console.log(rinfo);
+//	console.log(msg);
 	var buf = bencode.encode(msg);
     udp.send(buf, 0, buf.length, rinfo.port, rinfo.address);
 }
