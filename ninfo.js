@@ -8,6 +8,8 @@ NodeInfo=function(ip, port, nid, state){
 	this.port=port;
 	this.nid=nid;
 	this.state=state;
+	this.pingRetry=10;
+	this.findNodeRetry=10;
 }
 
 NodeInfo.prototype.compare=function(rinfo){
@@ -17,7 +19,8 @@ NodeInfo.prototype.compare=function(rinfo){
 	console.log("==cmp: rinfo");
 	console.log(rinfo);
 */
-	return (this.ip == rinfo.ip) && (this.port == rinfo.port);
+//	return (this.ip == rinfo.ip) && (this.port == rinfo.port);
+	return (this.ip == rinfo.ip) ;
 }
 
 parseNodeInfoFromRespList=function(respList){
@@ -59,7 +62,8 @@ NodeInfoList.prototype.append=function(node){
 
 
 //FIXME: TBD
-NodeInfoList.prototype.delete=function(node){
+NodeInfoList.prototype.delete=function(index){
+	this.l = L.remove(index,1,this.l);
 }
 
 
@@ -85,7 +89,7 @@ NodeInfoList.prototype.getNode=function( index){
 }
 
 NodeInfoList.prototype.dumpNodeInfoList=function( ){
-	console.log("++dump NondInfo:");
+	console.log("++dump NondInfo: length=%d", this.l.length);
 	for( e of this.l){
 		console.log(e);
 	}

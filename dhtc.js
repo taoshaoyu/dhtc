@@ -153,8 +153,17 @@ DHTClient.prototype.pingNode=function( rinfo ){
 	dhtc_ll.sendPingRequest( this.udp, this.nid, {address: rinfo.ip, port: rinfo.port} );
 //	this.q.append(new NodeInfo(rinfo.ip, rinfo.port, 0, 'waitPing'));
 	newNode = new NodeInfo(rinfo.ip, rinfo.port, 0, 'waitPing');
-	if( this.q.findNode(newNode) == -1 )
+	index=this.q.findNode(newNode);
+	if(  index== -1 )
 		this.q.append(newNode);
+	else{
+		node=L.nth(index,this.q.l);
+		node.pingRetry--;
+		if(node.pingRetry==0){
+			// FIXME: to debug it
+			this.q.delete(index);
+		}
+	}
 }
 
 DHTClient.prototype.getStartupNodesNidAsync=function(startupNodes){
@@ -187,10 +196,27 @@ DHTClient.prototype.start=function(){
 
 DHTClient.prototype.mainLoop=function(error){
 	console.log("mainLoop");
-	setInterval(this.handleTimed.bind(this), 10000);
+//	setInterval(this.handleTimed.bind(this), 10000);
 }
+
+
 
 
 dhtc.init({addr:"0.0.0.0",port:7888});
 dhtc.start();
 dhtc.mainLoop();
+
+
+dd=function(){
+	dhtc.q.dumpNodeInfoList();
+}
+
+p=function(n){
+	dhtc.pingNode((L.nth(n,dhtc.q.l)))
+}
+
+fd=function (n) {
+	dhtc.findNodes((L.nth(n,dhtc.q.l)))
+}
+
+
