@@ -33,7 +33,7 @@ var startupNodesInfo=[   //{ip:'router.bittorrent.com', port:6881},
 function DHTClient(){
 	this.nid=randomID();    //FIXME: nid is fixed or not ? If I restart app, nid is changed? 
 							// Do I need to save nid in a configuration ?
-	this.q = new NodeInfoList(100);
+	this.q = new NodeInfoList(200);
 };
 
 
@@ -46,25 +46,34 @@ DHTClient.prototype.onUdpListen=function(){
 DHTClient.prototype.handleMsg=function(node, msg){
 	if( (msg.y=='r') && (msg.r) && (! msg.r.nodes) ){    // resp for 'ping'
 	    if(node.state=='waitPing') {     
-			console.log("ping<==[%s][%s]",node.ip, node.port);
+			//console.log("ping<==[%s][%s]",node.ip, node.port);
 			node.nid=msg.r.id;
 			node.state='pinged'
 			return ;
 		}else{     // ping response has received and resp again, drop it
 			return;  
 		}
-	}else if((msg.y=='r') && (msg.r) && (msg.r.nodes) &&(node.state=='pinged')){	//resp for 'find_node'
-		console.log("find_node<==[%s][%s]",node.ip, node.port);
+	}else if((msg.y=='r') && (msg.r) && (msg.r.nodes)){  //resp for 'find_node'
+		 // &&(node.state=='pinged')){	
+		if( (! node.state) || (node.state != 'pinged') ){
+			console.log("++++++++++OMG+++++++");
+			console.log(node);
+			process.exit(1);
+			return ;
+		}
 		nodelistFromResp=dhtc_ll.decodeNodes(msg.r.nodes);
 		//console.log(nodelistFromResp);
 		nodeList=parseNodeInfoFromRespList(nodelistFromResp);
-		//console.log(nodeList);
+/*		FIXME: here , need to check whether there are dup node
 		for( i=0; i<nodeList.length; i++)
 			this.q.append(nodeList[i]);
+*/		
+		addValues=this.q.addNotes(nodeList);
+		//console.log("find_node<==[%s][%s], +%d",node.ip, node.port, addValues);
 		return ;
 	}else if( (msg.y='q')  ){
 		//FIXME: node query me ??? not implemented
-		//console.log("Query<===");
+		console.log("Query<===");
 		return ;
 	}           
 	else{
@@ -77,7 +86,7 @@ DHTClient.prototype.handleMsg=function(node, msg){
 
 
 DHTClient.prototype.findNodes=function(node){
-	console.log("findNodes==>[%s][%s]",node.ip, node.port);
+//	console.log("findNodes==>[%s][%s]",node.ip, node.port);
 //	console.log(this);
 	dhtc_ll.sendFindNodeRequest(this.udp, this.nid, node.nid, {address: node.ip, port: node.port});
 //	FIXME: maybe now I need to add a new state to indecate that I have sent 'find_nodes' to this node.
@@ -104,8 +113,6 @@ DHTClient.prototype.handleTimed=function(){
 }
 
 
-//FIXME: here need to rewrite
-//  'find_node' will return more than 1 node, can not use updateNode 
 DHTClient.prototype.onUdpMessage=function(msg, rinfo){  
 //	console.log("<--utp message:[%s]", rinfo.address);						
 //	console.log(rinfo);
@@ -117,7 +124,8 @@ DHTClient.prototype.onUdpMessage=function(msg, rinfo){
 	this.q.updateNode( index, newNode );	
 */
 	index= this.q.findNode( new NodeInfo(rinfo.address, rinfo.port) );
-	this.handleMsg( this.q.getNode(index) , msg );
+	if( index !=-1 )
+		this.handleMsg( this.q.getNode(index) , msg );
 
 }
 
@@ -148,20 +156,24 @@ DHTClient.prototype.joinDHTNetwork = function() {
 
 
 DHTClient.prototype.pingNode=function( rinfo ){
-	console.log("ping==>[%s][%s]", rinfo.ip, rinfo.port);
-//	console.log(this);
-	dhtc_ll.sendPingRequest( this.udp, this.nid, {address: rinfo.ip, port: rinfo.port} );
-//	this.q.append(new NodeInfo(rinfo.ip, rinfo.port, 0, 'waitPing'));
+//	console.log("ping==>[%s][%s]", rinfo.ip, rinfo.port);
 	newNode = new NodeInfo(rinfo.ip, rinfo.port, 0, 'waitPing');
 	index=this.q.findNode(newNode);
-	if(  index== -1 )
+	if(  index== -1 ){
+		dhtc_ll.sendPingRequest( this.udp, this.nid, {address: rinfo.ip, port: rinfo.port} );
 		this.q.append(newNode);
+	}
 	else{
 		node=L.nth(index,this.q.l);
 		node.pingRetry--;
 		if(node.pingRetry==0){
-			// FIXME: to debug it
 			this.q.delete(index);
+		}else if(node.state== 'deleted'){
+			console.log("Error: to ping a deleted node");
+			console.log(node);
+			process.exit(1);
+		}else{
+			dhtc_ll.sendPingRequest( this.udp, this.nid, {address: rinfo.ip, port: rinfo.port} );
 		}
 	}
 }
@@ -196,13 +208,17 @@ DHTClient.prototype.start=function(){
 
 DHTClient.prototype.mainLoop=function(error){
 	console.log("mainLoop");
-//	setInterval(this.handleTimed.bind(this), 10000);
+	setInterval(this.handleTimed.bind(this), 5000);
+	setInterval(function(){
+		this.q.dumpNodeInfoList(1);
+		this.q.sanCheck();
+	}.bind(this), 30000);
 }
 
 
 
 
-dhtc.init({addr:"0.0.0.0",port:7888});
+dhtc.init({addr:"0.0.0.0",port:8079});
 dhtc.start();
 dhtc.mainLoop();
 
