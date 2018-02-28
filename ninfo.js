@@ -70,7 +70,7 @@ NodeInfoList.prototype.append=function(node){
 //OMG, maybe I should use other package instend of package 'List'
 //Now I just mark this NodeInfo as 'deleted', but this element is still in the queue
 NodeInfoList.prototype.delete=function(index){
-	console.log("  ===> delete %d", index);
+	//console.log("  ===> delete %d", index);
 	//this.l = L.remove(index,1,this.l);
 	L.nth(index,this.l).state='deleted';
 }

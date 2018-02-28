@@ -46,15 +46,32 @@ printKRPC=function(msg){
 }
 
 
+/**
+{ t: "taos",y:'q', q:'ping', a:{id: mynid}};     -->   [ router.bittorrent.com ]
+{ t: 'taos',y:'r', r:{id: nodeId}, v: ...  }    <---  [ router.bittorrent.com ]
+{ t: 'taos',y:'q', q: 'find_node', a:{ id: mynid, target : targetID } }     -->   [ router.bittorrent.com ]
+{ t : taos, y:'r', r:{ id:targetID, nodes:  <.....>} }                    <---  [ router.bittorrent.com ]
+**/
 sendPingRequest=function(udp,nid,target_rinfo){
 	var msg = {t: "taos",y: 'q', q: 'ping', a: {id: nid,}};
     sendKRPC(udp,msg,target_rinfo);
+}
+
+sendPingResponse=function(udp, tid, nid, rinfo){
+	var msg = {t: tid, y: 'r', r:{id: nid} };
+	sendKRPC(udp,msg,rinfo);
 }
 
 sendFindNodeRequest=function(udp, nid, targetId, rinfo){
     var msg = {t: "taos", y: 'q', q: 'find_node',
         a: {id: nid, target: targetId} };
     sendKRPC(udp, msg, rinfo);
+}
+
+//targetIDList mean I hope to tell other nodes
+sendFindNodeResponse=function(udp, tid, mynid, targetIDList, rinfo){
+	var msg={t: tid, y:'r', r:{id:mynid, nodes:targetIDList} };
+	sendKRPC(udp, msg, rinfo);
 }
 
 decodeNodes = function(data) {
@@ -77,3 +94,5 @@ exports.sendPingRequest = sendPingRequest;
 exports.decodeMsg = decodeMsg;
 exports.printKRPC = printKRPC;
 exports.decodeNodes = decodeNodes;
+exports.sendPingResponse = sendPingResponse;
+exports.sendFindNodeResponse = sendFindNodeResponse

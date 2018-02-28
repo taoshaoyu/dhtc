@@ -33,7 +33,7 @@ var startupNodesInfo=[   //{ip:'router.bittorrent.com', port:6881},
 function DHTClient(){
 	this.nid=randomID();    //FIXME: nid is fixed or not ? If I restart app, nid is changed? 
 							// Do I need to save nid in a configuration ?
-	this.q = new NodeInfoList(200);
+	this.q = new NodeInfoList(2000);
 };
 
 
@@ -45,6 +45,7 @@ DHTClient.prototype.onUdpListen=function(){
 
 DHTClient.prototype.handleMsg=function(node, msg){
 	if( (msg.y=='r') && (msg.r) && (! msg.r.nodes) ){    // resp for 'ping'
+	//	console.log(msg);
 	    if(node.state=='waitPing') {     
 			//console.log("ping<==[%s][%s]",node.ip, node.port);
 			node.nid=msg.r.id;
@@ -71,11 +72,40 @@ DHTClient.prototype.handleMsg=function(node, msg){
 		addValues=this.q.addNotes(nodeList);
 		//console.log("find_node<==[%s][%s], +%d",node.ip, node.port, addValues);
 		return ;
-	}else if( (msg.y='q')  ){
-		//FIXME: node query me ??? not implemented
-		console.log("Query<===");
+	}else if( (msg.y=='q')  ){		//FIXME: node query me ??? not implemented
+		//console.log("Query<=== and q=%s", msg.q);
+		if( msg.q == 'get_peers'){
+			console.log('get_peers');
+		}else if(msg.q == 'announce_peer'){
+			console.log('announce_peer');
+		}else if(msg.q == 'ping'){
+		//	console.log('resp ping ==> %s', node.ip);
+			dhtc_ll.sendPingResponse(this.udp, msg.t, this.nid, {address: node.ip, port: node.port}) 
+			return ;
+		}else if(msg.q == 'find_node'){
+/*			// TBD, I don't know how to reply nodes' find_node , ignore it now
+			targetIDList=[];
+			targetIDList.push()
+			dhtc_ll.sendFindNodeResponse(this.udp, msg.t, this.nid, targetIDList, {address: node.ip, port: node.port}) // TBD
+*/		
+		//	console.log('resp find_node ==> %s', node.ip);
+			dhtc_ll.sendFindNodeResponse(this.udp, msg.t, this.nid, {}, {address: node.ip, port: node.port})
+			return ;
+		}
+		else{
+			console.log('what is it??');
+			console.log(msg);
+		}
 		return ;
-	}           
+	}else if((msg.y=='e')){			//FIXME: remote node report an error, how to deal with it??
+									//I don't know why one ip will report error repeatly, Should I need to delete this node ?
+		//console.log("An Error from:[%s]", node.ip);
+		return ;
+	}else if((!msg.y) && (!msg.t) &&(!msg.q) ){
+		//  Just a msg like "{ v: <Buffer 4c 54 01 01> }"
+		// I do not know how to deal with it.So, drop it
+		return ;
+	}
 	else{
 		console.log("TBD=====");
 		console.log(node);
@@ -102,10 +132,6 @@ DHTClient.prototype.handlerNodesByTimer=function(node){
 }
 
 DHTClient.prototype.handleTimed=function(){
-//	console.log("timed");
-//	this.q.forEach( (node,index) => {
-//		this.handlerNodesByTimer(node);     //No need to update queue here, pingNode / findNodes will 
-//	} );
 	for (node of this.q.l){
 		this.handlerNodesByTimer(node);  
 	}
@@ -208,11 +234,11 @@ DHTClient.prototype.start=function(){
 
 DHTClient.prototype.mainLoop=function(error){
 	console.log("mainLoop");
-	setInterval(this.handleTimed.bind(this), 5000);
-	setInterval(function(){
+	this.tvTimed=setInterval(this.handleTimed.bind(this), 500);
+	this.tvCheckQueue=setInterval(function(){
 		this.q.dumpNodeInfoList(1);
 		this.q.sanCheck();
-	}.bind(this), 30000);
+	}.bind(this), 5000);
 }
 
 
@@ -223,8 +249,8 @@ dhtc.start();
 dhtc.mainLoop();
 
 
-dd=function(){
-	dhtc.q.dumpNodeInfoList();
+dd=function(n){
+	dhtc.q.dumpNodeInfoList(n);
 }
 
 p=function(n){
@@ -233,6 +259,11 @@ p=function(n){
 
 fd=function (n) {
 	dhtc.findNodes((L.nth(n,dhtc.q.l)))
+}
+
+cd=function(){
+	clearTimeout(dhtc.tvTimed);
+	clearTimeout(dhtc.tvCheckQueue);
 }
 
 
