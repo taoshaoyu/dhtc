@@ -126,12 +126,18 @@ NodeInfoList.prototype.getNode=function( index){
 }
 
 NodeInfoList.prototype.dumpNodeInfoList=function( simpleOrNot ){
-	console.log("  ++dump NondInfo List: length=%d", this.l.length);
+//	console.log("  ++dump NondInfo List: length=%d", this.l.length);
+	var deletedNotesCount=0;
+	for( i=0; i<this.l.length; i++){
+		if(L.nth(i,this.l).state == 'deleted')
+			deletedNotesCount++;
+	}
 	if( simpleOrNot == 0){
 		for( i=0; i<this.l.length; i++){
 			console.log("[%d]: %s", i, L.nth(i,this.l).ip);
 		}
 	}
+	console.log("  ++dump length=%d deleted=%d", this.l.length, deletedNotesCount);
 }
 
 NodeInfoList.prototype.sanCheck=function(){

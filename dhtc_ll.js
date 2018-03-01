@@ -47,10 +47,13 @@ printKRPC=function(msg){
 
 
 /**
-{ t: "taos",y:'q', q:'ping', a:{id: mynid}};     -->   [ router.bittorrent.com ]
+{ t: 'taos',y:'q', q:'ping', a:{id: mynid}};     -->   [ router.bittorrent.com ]
 { t: 'taos',y:'r', r:{id: nodeId}, v: ...  }    <---  [ router.bittorrent.com ]
-{ t: 'taos',y:'q', q: 'find_node', a:{ id: mynid, target : targetID } }     -->   [ router.bittorrent.com ]
-{ t : taos, y:'r', r:{ id:targetID, nodes:  <.....>} }                    <---  [ router.bittorrent.com ]
+{ t: 'taos',y:'q', q:'find_node', a:{ id: mynid, target : targetID } }     -->   [ router.bittorrent.com ]
+{ t: 'taos',y:'r', r:{ id:targetID, nodes:  <.....>} }                    <---  [ router.bittorrent.com ]
+{ t: 'taos',y:'q', q:'get_peer', a:{id: mynid, info_hash: XXXXXX}, v:'YYYY'}  --> 
+{ t: 'taos',y:'r', r:{id: mynid, token:XXXX, nodes: XXXXX}, v:'YYYY'}  <--  or
+{ t: 'taos',y:'r', r:{id: mynid, token:XXXX, value: XXXXX}, v:'YYYY'}  <--
 **/
 sendPingRequest=function(udp,nid,target_rinfo){
 	var msg = {t: "taos",y: 'q', q: 'ping', a: {id: nid,}};
@@ -71,6 +74,24 @@ sendFindNodeRequest=function(udp, nid, targetId, rinfo){
 //targetIDList mean I hope to tell other nodes
 sendFindNodeResponse=function(udp, tid, mynid, targetIDList, rinfo){
 	var msg={t: tid, y:'r', r:{id:mynid, nodes:targetIDList} };
+	sendKRPC(udp, msg, rinfo);
+}
+
+sendGetPeerRequest=function(udp, tid, nid, token, nodes, rinfo){
+	var msg={t:tid, y:'r', r:{id: nid, token: token, nodes: nodes}};
+	console.log(msg);
+	sendKRPC(udp, msg, rinfo);
+
+}
+
+sendGetPeerResponseWithNode=function(udp, tid, nid, token, nodes, rinfo){
+	var msg={t:tid, y:'r', r:{id: nid, token: token, nodes: nodes}};
+//	console.log(msg);
+	sendKRPC(udp, msg, rinfo);
+
+}
+sendGetPeerResponseWithValue=function(udp, tid, nid, token, value, rinfo){
+	var msg={t:tid, y:'r', r:{id: nid, token: token, value: value}};
 	sendKRPC(udp, msg, rinfo);
 }
 
@@ -96,3 +117,5 @@ exports.printKRPC = printKRPC;
 exports.decodeNodes = decodeNodes;
 exports.sendPingResponse = sendPingResponse;
 exports.sendFindNodeResponse = sendFindNodeResponse
+exports.sendGetPeerResponseWithNode=sendGetPeerResponseWithNode;
+exports.sendGetPeerResponseWithValue=sendGetPeerResponseWithValue;

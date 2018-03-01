@@ -43,6 +43,32 @@ DHTClient.prototype.onUdpListen=function(){
 //	console.log("---utp listen");
 }
 
+
+DHTClient.prototype.onGetPeersRequest = function(node,msg) {
+//    console.log("+++ +onGetPeersRequest");
+//    console.log(node.ip);
+//    console.log(msg);
+    try {
+        var infohash = msg.a.info_hash;
+        var tid = msg.t;
+        var nid = msg.a.id;
+        var token = infohash.slice(0, 2);
+
+        if (tid === undefined || infohash.length != 20 || nid.length != 20) {
+            throw new Error;
+        }
+    }
+    catch (err) {
+        return;
+    }
+/*    
+    this.sendKRPC({
+        t: tid,y: 'r',r: {id: genNeighborID(infohash, this.ktable.nid), nodes: '',  token: token  }
+    }, rinfo);
+*/
+	dhtc_ll.sendGetPeerResponseWithNode(this.udp, tid, nid, token, '', {address: node.ip, port: node.port})
+};
+
 DHTClient.prototype.handleMsg=function(node, msg){
 	if( (msg.y=='r') && (msg.r) && (! msg.r.nodes) ){    // resp for 'ping'
 	//	console.log(msg);
@@ -75,9 +101,12 @@ DHTClient.prototype.handleMsg=function(node, msg){
 	}else if( (msg.y=='q')  ){		//FIXME: node query me ??? not implemented
 		//console.log("Query<=== and q=%s", msg.q);
 		if( msg.q == 'get_peers'){
-			console.log('get_peers');
+			//console.log('get_peers');
+			this.onGetPeersRequest(node,msg);
 		}else if(msg.q == 'announce_peer'){
 			console.log('announce_peer');
+			console.log(node.ip);
+			console.log(msg);
 		}else if(msg.q == 'ping'){
 		//	console.log('resp ping ==> %s', node.ip);
 			dhtc_ll.sendPingResponse(this.udp, msg.t, this.nid, {address: node.ip, port: node.port}) 
@@ -142,7 +171,12 @@ DHTClient.prototype.handleTimed=function(){
 DHTClient.prototype.onUdpMessage=function(msg, rinfo){  
 //	console.log("<--utp message:[%s]", rinfo.address);						
 //	console.log(rinfo);
+try {
 	msg=dhtc_ll.decodeMsg(msg);
+}catch (err) {
+    console.log("msg decode err, drop it");
+    return ;
+}
 //	dhtc_ll.printKRPC(msg);
 /*
 	index= this.q.findNode( new NodeInfo(rinfo.address, rinfo.port) );
