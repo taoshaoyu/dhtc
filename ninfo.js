@@ -8,19 +8,21 @@ NodeInfo=function(ip, port, nid, state){
 	this.port=port;
 	this.nid=nid;
 	this.state=state;
-	this.pingRetry=10;
+	this.pingRetry=5;
 	this.findNodeRetry=10;
 }
 
 NodeInfo.prototype.compare=function(rinfo){
-/*
-	console.log("==cmp: this");
-	console.log(this);
-	console.log("==cmp: rinfo");
-	console.log(rinfo);
-*/
-//	return (this.ip == rinfo.ip) && (this.port == rinfo.port);
 	return (this.ip == rinfo.ip) ;
+}
+
+NodeInfo.prototype.nodeCopy=function(node){
+	this.ip=node.ip;
+	this.port=node.port;
+	this.nid=node.nid;
+	this.state=node.state;
+	this.pingRetry=node.pingRetry;
+	this.findNodeRetry=node.findNodeRetry;
 }
 
 NodeInfo.prototype.dumpSelf=function(){
@@ -53,15 +55,33 @@ NodeInfoList=function(maxSize){
 	console.log("++ NodeInfoList init ++");
 	this.l=L.empty();
 	this.maxSize=maxSize;
+	this.deletedCount=0;
 }
 
 NodeInfoList.prototype.append=function(node){
 //	console.log("++ append ++");
-	if(this.l.length==this.maxSize){
-		//FIXME: drop it ??
-		return;	
+	found=false;
+	if( this.deletedCount > 0){   // there are 'delete' record, replace it.
+		for( index=0; index<this.l.length; index++){
+			oldNode=L.nth(index,this.l);
+			if(oldNode.state == 'deleted'){  //found 
+				found=true;
+				oldNode.nodeCopy(node);   //replace 
+				this.deletedCount --;
+				break;
+			}
+		}
+		if(! found){
+			console.log("Impossible...");
+			proess.exit(1);
+		}
+	}else{
+		if(this.l.length==this.maxSize){
+			//FIXME: drop it ??
+			return;	
+		}
+		this.l = L.append(node, this.l);
 	}
-	this.l = L.append(node, this.l);
 }
 
 //There is a bug here related with List's sync
@@ -73,6 +93,7 @@ NodeInfoList.prototype.delete=function(index){
 	//console.log("  ===> delete %d", index);
 	//this.l = L.remove(index,1,this.l);
 	L.nth(index,this.l).state='deleted';
+	this.deletedCount++;
 }
 
 
@@ -127,17 +148,19 @@ NodeInfoList.prototype.getNode=function( index){
 
 NodeInfoList.prototype.dumpNodeInfoList=function( simpleOrNot ){
 //	console.log("  ++dump NondInfo List: length=%d", this.l.length);
+/*
 	var deletedNotesCount=0;
 	for( i=0; i<this.l.length; i++){
 		if(L.nth(i,this.l).state == 'deleted')
 			deletedNotesCount++;
 	}
+*/
 	if( simpleOrNot == 0){
 		for( i=0; i<this.l.length; i++){
-			console.log("[%d]: %s", i, L.nth(i,this.l).ip);
+			console.log("[%d]: %s , %s", i, L.nth(i,this.l).ip, L.nth(i,this.l).state);
 		}
 	}
-	console.log("  ++dump length=%d deleted=%d", this.l.length, deletedNotesCount);
+	console.log("  ++dump length=%d deleted=%d", this.l.length, this.deletedCount);
 }
 
 NodeInfoList.prototype.sanCheck=function(){
