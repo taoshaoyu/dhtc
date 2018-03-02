@@ -47,13 +47,15 @@ printKRPC=function(msg){
 
 
 /**
-{ t: 'taos',y:'q', q:'ping', a:{id: mynid}};     -->   [ router.bittorrent.com ]
-{ t: 'taos',y:'r', r:{id: nodeId}, v: ...  }    <---  [ router.bittorrent.com ]
-{ t: 'taos',y:'q', q:'find_node', a:{ id: mynid, target : targetID } }     -->   [ router.bittorrent.com ]
-{ t: 'taos',y:'r', r:{ id:targetID, nodes:  <.....>} }                    <---  [ router.bittorrent.com ]
-{ t: 'taos',y:'q', q:'get_peer', a:{id: mynid, info_hash: XXXXXX}, v:'YYYY'}  --> 
-{ t: 'taos',y:'r', r:{id: mynid, token:XXXX, nodes: XXXXX}, v:'YYYY'}  <--  or
-{ t: 'taos',y:'r', r:{id: mynid, token:XXXX, value: XXXXX}, v:'YYYY'}  <--
+{ t: tid, y:'q', q:'ping', a:{id: mynid}};     -->   [ router.bittorrent.com ]
+{ t: tid, y:'r', r:{id: nodeId}, v: ...  }    <---  [ router.bittorrent.com ]
+{ t: tid, y:'q', q:'find_node', a:{ id: mynid, target : targetID } }     -->   [ router.bittorrent.com ]
+{ t: tid, y:'r', r:{ id:targetID, nodes:  <.....>} }                    <---  [ router.bittorrent.com ]
+{ t: tid, y:'q', q:'get_peer', a:{id: mynid, info_hash: XXXXXX}, v:'YYYY'}  --> 
+{ t: tid, y:'r', r:{id: mynid, token:XXXX, nodes: XXXXX}, v:'YYYY'}  <--  or
+{ t: tid, y:'r', r:{id: mynid, token:XXXX, value: XXXXX}, v:'YYYY'}  <--
+{ t: tid, y:'q', q:'announce_peer', a:{id, nid, info_hash: 20B, port, token}}  -->
+{ t: tid, y:'r', r:{id: nid} }  <---
 **/
 sendPingRequest=function(udp,nid,target_rinfo){
 	var msg = {t: "taos",y: 'q', q: 'ping', a: {id: nid,}};
@@ -94,6 +96,11 @@ sendGetPeerResponseWithValue=function(udp, tid, nid, token, value, rinfo){
 	var msg={t:tid, y:'r', r:{id: nid, token: token, value: value}};
 	sendKRPC(udp, msg, rinfo);
 }
+sendAnnouncepeerResponse=function(udp,tid,nid,rinfo){
+    var msg={t:tid, y:'r', r:{id: nid}};
+    sendKRPC(udp, msg, rinfo);
+}
+
 
 decodeNodes = function(data) {
     var nodes = [];
@@ -119,3 +126,4 @@ exports.sendPingResponse = sendPingResponse;
 exports.sendFindNodeResponse = sendFindNodeResponse
 exports.sendGetPeerResponseWithNode=sendGetPeerResponseWithNode;
 exports.sendGetPeerResponseWithValue=sendGetPeerResponseWithValue;
+exports.sendAnnouncepeerResponse=sendAnnouncepeerResponse;

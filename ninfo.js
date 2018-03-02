@@ -9,7 +9,8 @@ NodeInfo=function(ip, port, nid, state){
 	this.nid=nid;
 	this.state=state;
 	this.pingRetry=5;
-	this.findNodeRetry=10;
+	this.findNodeRetry=30;
+	this.score=120;
 }
 
 NodeInfo.prototype.compare=function(rinfo){
