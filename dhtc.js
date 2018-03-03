@@ -48,7 +48,10 @@ DHTClient.prototype.onUdpListen=function(){
 DHTClient.prototype.onAnnouncePeerRequest = function(node, msg) {
 	var port;
     console.log("+++ +onAnnouncePeerRequest");
-    console.log(msg);
+ //   console.log(msg);
+ 	if(msg.a.name){
+ 		console.log(msg.a.name);
+ 	}
     try {
         var infohash = msg.a.info_hash;
         var token = msg.a.token;
@@ -77,7 +80,7 @@ DHTClient.prototype.onAnnouncePeerRequest = function(node, msg) {
     if (port >= 65536 || port <= 0) {
         return;
     }
-//	dhtc_ll.sendAnnouncepeerResponse(this.udp, tid, genNeighborID(nid, this.nid), {address: node.ip, port: node.port})
+	dhtc_ll.sendAnnouncepeerResponse(this.udp, tid, genNeighborID(nid, this.nid), {address: node.ip, port: node.port})
     console.log("magnet:?xt=urn:btih:%s from %s:%s", infohash.toString("hex"), node.ip, node.port);
 };
 
@@ -102,9 +105,14 @@ DHTClient.prototype.onGetPeersRequest = function(node,msg) {
 // **IMPORTANT 1**:  Here, if tid is error, No announce_peer can be received
 };
 
+DHTClient.prototype.onPingRequest = function(node,msg) {
+//	dhtc_ll.sendPingResponse(this.udp, msg.tid, this.nid, {address: node.ip, port: node.port});
+//  Why If I response 'ping', I will receive more 'error'
+}
+
 DHTClient.prototype.handleMsg=function(node, msg){
 	if( (msg.y=='r') && (msg.r) && (! msg.r.nodes) ){    // resp for 'ping'
-		console.log('resp of Ping');	
+		//console.log('resp of Ping');	
 	}else if((msg.y=='r') && (msg.r) && (msg.r.nodes)){  //resp for 'find_node', add these node to query
 		nodelistFromResp=dhtc_ll.decodeNodes(msg.r.nodes);
 		for(i=0; i<nodelistFromResp.length; i++){
@@ -117,6 +125,7 @@ DHTClient.prototype.handleMsg=function(node, msg){
 	}else if( (msg.y=='q')  ){		
 		if(msg.q=='ping'){
 		//	console.log("query ping ");
+			this.onPingRequest(node, msg);
 		}else if( msg.q=='find_node'){
 		//	console.log("query find_node ");
 		}else if( msg.q=='announce_peer'){
@@ -128,6 +137,7 @@ DHTClient.prototype.handleMsg=function(node, msg){
 		}
 	}else if((msg.y=='e')){			
 		console.log('error ');
+		console.log(msg);
 	}else if((!msg.y) && (!msg.t) &&(!msg.q) ){
 		console.log('Nothing');
 	}
