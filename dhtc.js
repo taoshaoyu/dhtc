@@ -47,10 +47,10 @@ DHTClient.prototype.onUdpListen=function(){
 
 DHTClient.prototype.onAnnouncePeerRequest = function(node, msg) {
 	var port;
-    console.log("+++ +onAnnouncePeerRequest");
+ //   console.log("+++ +onAnnouncePeerRequest");
  //   console.log(msg);
  	if(msg.a.name){
- 		console.log(msg.a.name);
+ 		console.log(msg.a.name.toString('utf8'));
  	}
     try {
         var infohash = msg.a.info_hash;
@@ -81,7 +81,7 @@ DHTClient.prototype.onAnnouncePeerRequest = function(node, msg) {
         return;
     }
 	dhtc_ll.sendAnnouncepeerResponse(this.udp, tid, genNeighborID(nid, this.nid), {address: node.ip, port: node.port})
-    console.log("magnet:?xt=urn:btih:%s from %s:%s", infohash.toString("hex"), node.ip, node.port);
+//    console.log("magnet:?xt=urn:btih:%s from %s:%s", infohash.toString("hex"), node.ip, node.port);
 };
 
 
@@ -133,16 +133,16 @@ DHTClient.prototype.handleMsg=function(node, msg){
 		}else if( msg.q== 'get_peers'){
 			this.onGetPeersRequest(node, msg);
 		}else{
-			console.log("query TBD ");
+		//	console.log("query TBD $s", msg.q);
 		}
 	}else if((msg.y=='e')){			
-		console.log('error ');
-		console.log(msg);
+	//	console.log('error ');
+	//	console.log(msg);
 	}else if((!msg.y) && (!msg.t) &&(!msg.q) ){
-		console.log('Nothing');
+	//	console.log('Nothing');
 	}
 	else{
-		console.log('TBD');
+	//	console.log('TBD');
 	}
 }
 
