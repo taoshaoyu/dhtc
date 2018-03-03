@@ -161,7 +161,7 @@ NodeInfoList.prototype.dumpNodeInfoList=function( simpleOrNot ){
 			console.log("[%d]: %s , %s", i, L.nth(i,this.l).ip, L.nth(i,this.l).state);
 		}
 	}
-	console.log("  ++dump length=%d deleted=%d", this.l.length, this.deletedCount);
+//	console.log("  ++dump length=%d deleted=%d", this.l.length, this.deletedCount);
 }
 
 NodeInfoList.prototype.sanCheck=function(){

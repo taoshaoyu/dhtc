@@ -58,7 +58,7 @@ printKRPC=function(msg){
 { t: tid, y:'r', r:{id: nid} }  <---
 **/
 sendPingRequest=function(udp,nid,target_rinfo){
-	var msg = {t: "taos",y: 'q', q: 'ping', a: {id: nid,}};
+	var msg = {t: "taos",y: 'q', q: 'ping', a: {id: nid}};
     sendKRPC(udp,msg,target_rinfo);
 }
 
