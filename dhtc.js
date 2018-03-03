@@ -45,7 +45,40 @@ DHTClient.prototype.onUdpListen=function(){
 }
 
 
-DHTClient.prototype.onAnnouncePeerRequest = function(msg, rinfo) {
+DHTClient.prototype.onAnnouncePeerRequest = function(node, msg) {
+	var port;
+    console.log("+++ +onAnnouncePeerRequest");
+    console.log(msg);
+    try {
+        var infohash = msg.a.info_hash;
+        var token = msg.a.token;
+        var nid = msg.a.id;
+        var tid = msg.t;
+
+        if (tid == undefined) {
+            throw new Error;
+        }
+    }
+    catch (err) {
+        return;
+    }
+
+    if (infohash.slice(0, 2).toString() != token.toString()) {
+        return;
+    }
+
+    if (msg.a.implied_port != undefined && msg.a.implied_port != 0) {
+        port = node.port;
+    }
+    else {
+        port = msg.a.port || 0;
+    }
+
+    if (port >= 65536 || port <= 0) {
+        return;
+    }
+//	dhtc_ll.sendAnnouncepeerResponse(this.udp, tid, genNeighborID(nid, this.nid), {address: node.ip, port: node.port})
+    console.log("magnet:?xt=urn:btih:%s from %s:%s", infohash.toString("hex"), node.ip, node.port);
 };
 
 
@@ -64,8 +97,9 @@ DHTClient.prototype.onGetPeersRequest = function(node,msg) {
     catch (err) {
         return;
     }
-	dhtc_ll.sendGetPeerResponseWithNode(this.udp, node.tid, genNeighborID(infohash, this.nid), token, '', {address: node.ip, port: node.port})
-//	console.log("onGetPeersRequest--");
+//	dhtc_ll.sendGetPeerResponseWithNode(this.udp, node.tid, genNeighborID(infohash, this.nid), token, '', {address: node.ip, port: node.port})
+	dhtc_ll.sendGetPeerResponseWithNode(this.udp, tid, genNeighborID(infohash, this.nid), token, '', {address: node.ip, port: node.port})
+// **IMPORTANT 1**:  Here, if tid is error, No announce_peer can be received
 };
 
 DHTClient.prototype.handleMsg=function(node, msg){
@@ -78,6 +112,7 @@ DHTClient.prototype.handleMsg=function(node, msg){
 			//console.log(nn);
 			this.table.add(nn)
 		}
+//		console.log(this.table.q.length);
 		return ;
 	}else if( (msg.y=='q')  ){		
 		if(msg.q=='ping'){
@@ -85,7 +120,7 @@ DHTClient.prototype.handleMsg=function(node, msg){
 		}else if( msg.q=='find_node'){
 		//	console.log("query find_node ");
 		}else if( msg.q=='announce_peer'){
-			console.log("query announce_peer ");
+			this.onAnnouncePeerRequest(node,msg);
 		}else if( msg.q== 'get_peers'){
 			this.onGetPeersRequest(node, msg);
 		}else{
@@ -110,13 +145,13 @@ DHTClient.prototype.findNodes=function(node){
 
 DHTClient.prototype.findNodes2=function(node){
 //	console.log(node);
-	if( (node.port<0) || (node.port>65536) ){
+	if( (node.port<=0) || (node.port>=65536) ){
 		console.log("port error %d", node.port);
 		return ;
 	}
 	//dhtc_ll.sendFindNodeRequest(this.udp, this.nid, node.nid, {address: node.ip, port: node.port});
 	dhtc_ll.sendFindNodeRequest(this.udp, genNeighborID(node.nid, this.nid), randomID(), {address: node.ip, port: node.port});
-	//**IMPORTANT**:  Here, Must do that, otherwise response a lot of error.
+	//**IMPORTANT 1**:  Here, Must do that, otherwise response a lot of error.
 }
 
 
